@@ -28,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
 
-    final url = Uri.parse('http://192.168.192.79:5000/api/auth/login'); // Replace with your IP
+    final url = Uri.parse('https://elaundry-project.vercel.app/api/auth/login'); // Replace with your IP
     try {
       final response = await http.post(
         url,

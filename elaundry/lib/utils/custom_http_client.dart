@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomHttpClient {
-  final String baseUrl = 'http://192.168.192.79:5000/api';
+  final String baseUrl = 'https://elaundry-project.vercel.app/api';
   final Map<String, String> headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
