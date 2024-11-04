@@ -12,6 +12,7 @@ class UpdateOrderPage extends StatefulWidget {
 class _UpdateOrderPageState extends State<UpdateOrderPage> {
   final CustomHttpClient _httpClient = CustomHttpClient();
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _washWeightController = TextEditingController();
   Map<String, dynamic>? _orderDetails;
   bool _isLoading = false;
 
@@ -44,6 +45,57 @@ class _UpdateOrderPageState extends State<UpdateOrderPage> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _updateWashWeight() async {
+    if (_washWeightController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please enter wash weight')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _httpClient.post('/admin/update-wash-weight', {
+        'orderId': _orderDetails!['orderId'],
+        'wash_weight': double.parse(_washWeightController.text),
+      });
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Wash weight updated successfully')),
+        );
+        _searchOrder(); // Refresh order details
+      } else {
+        throw Exception('Failed to update wash weight');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating wash weight: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _updatePaymentStatus(bool newStatus) async {
+    try {
+      final response = await _httpClient.post('/admin/update-payment-status', {
+        'orderId': _orderDetails!['orderId'],
+        'paymentStatus': newStatus,
+      });
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment status updated successfully')),
+        );
+        _searchOrder(); // Refresh order details
+      } else {
+        throw Exception('Failed to update payment status');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating payment status: ${e.toString()}')),
+      );
     }
   }
 
@@ -95,10 +147,16 @@ class _UpdateOrderPageState extends State<UpdateOrderPage> {
                           SizedBox(height: 10),
                           _buildInfoRow('Customer', '${_orderDetails!['name']}'),
                           _buildInfoRow('Phone', '${_orderDetails!['phoneNumber']}'),
-                          _buildInfoRow('Collection Date', _formatDate(_orderDetails!['collectionDate'])),
-                          _buildInfoRow('Delivery Date', _formatDate(_orderDetails!['deliveryDate'])),
-                          _buildInfoRow('Amount', '\$${_orderDetails!['amount'].toStringAsFixed(2)}'),
+                          _buildInfoRow('Collection Time', '${_orderDetails!['collectionTime']}'),
+                          _buildInfoRow('Delivery Time', '${_orderDetails!['deliveryTime']}'),
+                          _buildInfoRow('Amount', '\₹${_orderDetails!['amount'].toStringAsFixed(2)}'),
                           _buildInfoRow('Weight', '${_orderDetails!['weight']} kg'),
+                          _buildInfoRow(
+                            'Wash Weight', 
+                            _orderDetails!['wash_weight'] != null 
+                                ? '${_orderDetails!['wash_weight']} kg' 
+                                : 'Not set'
+                          ),
                           SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -114,25 +172,84 @@ class _UpdateOrderPageState extends State<UpdateOrderPage> {
                             ],
                           ),
                           SizedBox(height: 20),
-                          ElevatedButton(
+                          TextField(
+                            controller: _washWeightController,
+                            decoration: InputDecoration(
+                              labelText: 'Enter Wash Weight (kg)',
+                              border: OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                icon: Icon(Icons.save),
+                                onPressed: _updateWashWeight,
+                              ),
+                            ),
+                            keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          ),
+                          SizedBox(height: 20),
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Update Payment Status',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () => _updatePaymentStatus(true),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: _orderDetails!['paymentStatus'] 
+                                            ? Colors.green 
+                                            : Colors.grey,
+                                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      ),
+                                      child: Text('Mark as Paid'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => _updatePaymentStatus(false),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: !_orderDetails!['paymentStatus'] 
+                                            ? Colors.red 
+                                            : Colors.grey,
+                                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      ),
+                                      child: Text('Mark as Pending'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          // Update Order button commented out
+                          /* ElevatedButton(
                             child: Text('Update Order'),
                             onPressed: () async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditOrderPage(orderDetails: _orderDetails!),
-      ),
-    );
-    if (result == true) {
-      // If the order was updated successfully, refresh the order details
-      _searchOrder();
-    }
-  },
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditOrderPage(orderDetails: _orderDetails!),
+                                ),
+                              );
+                              if (result == true) {
+                                _searchOrder();
+                              }
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
                               padding: EdgeInsets.symmetric(vertical: 15),
                             ),
-                          ),
+                          ), */
                         ],
                       ),
                     ),

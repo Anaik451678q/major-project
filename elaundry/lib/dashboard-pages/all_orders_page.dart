@@ -71,8 +71,8 @@ class _AllOrdersPageState extends State<AllOrdersPage> {
                               ),
                             ),
                             SizedBox(height: 8),
-                            Text('Collection Date: ${_formatDate(order['collectionDate'])}'),
-                            Text('Delivery Date: ${_formatDate(order['deliveryDate'])}'),
+                            Text('Collection: ${_formatDateTime(order['collectionDate'], order['collectionTime'])}'),
+                            Text('Delivery: ${_formatDateTime(order['deliveryDate'], order['deliveryTime'])}'),
                             Text('Amount: ₹${order['amount'].toStringAsFixed(2)}'),
                             Text('Weight: ${order['weight']} kg'),
                             SizedBox(height: 8),
@@ -101,9 +101,10 @@ class _AllOrdersPageState extends State<AllOrdersPage> {
     );
   }
 
-  String _formatDate(String? dateString) {
+  String _formatDateTime(String? dateString, String? timeString) {
     if (dateString == null) return 'N/A';
     final date = DateTime.parse(dateString);
-    return DateFormat('MMM dd, yyyy').format(date);
+    final formattedDate = DateFormat('MMM dd, yyyy').format(date);
+    return timeString != null ? '$formattedDate at $timeString' : formattedDate;
   }
 }

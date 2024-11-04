@@ -17,6 +17,9 @@ class _NewOrderPageState extends State<NewOrderPage> {
   TextEditingController _weightController = TextEditingController();
   TextEditingController _phoneNumberController = TextEditingController();
 
+  TimeOfDay? _collectionTime;
+  TimeOfDay? _deliveryTime;
+
   Future<void> _selectDate(BuildContext context, bool isCollectionDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -35,16 +38,46 @@ class _NewOrderPageState extends State<NewOrderPage> {
     }
   }
 
+  Future<void> _selectTime(BuildContext context, bool isCollectionTime) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isCollectionTime) {
+          _collectionTime = picked;
+        } else {
+          _deliveryTime = picked;
+        }
+      });
+    }
+  }
+
   Future<void> _submitOrder() async {
     if (_formKey.currentState!.validate()) {
+      if (_collectionDate == null || _collectionTime == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select collection date and time')),
+        );
+        return;
+      }
+      if (_deliveryDate == null || _deliveryTime == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select delivery date and time')),
+        );
+        return;
+      }
+
       try {
-        // Add one day to the picked dates
         final adjustedCollectionDate = _collectionDate?.add(Duration(days: 1));
         final adjustedDeliveryDate = _deliveryDate?.add(Duration(days: 1));
 
         final response = await _httpClient.post('/admin/new-order', {
           'collectionDate': adjustedCollectionDate?.toIso8601String(),
+          'collectionTime': _collectionTime?.format(context),
           'deliveryDate': adjustedDeliveryDate?.toIso8601String(),
+          'deliveryTime': _deliveryTime?.format(context),
           'amount': double.parse(_amountController.text),
           'weight': double.parse(_weightController.text),
           'phoneNumber': _phoneNumberController.text,
@@ -107,38 +140,48 @@ class _NewOrderPageState extends State<NewOrderPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.lightBlueAccent,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => _selectDate(context, true),
+                          child: Text(_collectionDate == null
+                              ? 'Select Collection Date'
+                              : 'Collection Date: ${DateFormat('yyyy-MM-dd').format(_collectionDate!)}'),
+                        ),
                       ),
-                    ),
-                    onPressed: () => _selectDate(context, true),
-                    child: Text(
-                      _collectionDate == null
-                          ? 'Select Collection Date'
-                          : 'Collection Date: ${DateFormat('yyyy-MM-dd').format(_collectionDate!)}',
-                      style: const TextStyle(color: Colors.black, fontSize: 16),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => _selectTime(context, true),
+                          child: Text(_collectionTime == null
+                              ? 'Select Collection Time'
+                              : 'Collection Time: ${_collectionTime!.format(context)}'),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.lightBlueAccent,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => _selectDate(context, false),
+                          child: Text(_deliveryDate == null
+                              ? 'Select Delivery Date'
+                              : 'Delivery Date: ${DateFormat('yyyy-MM-dd').format(_deliveryDate!)}'),
+                        ),
                       ),
-                    ),
-                    onPressed: () => _selectDate(context, false),
-                    child: Text(
-                      _deliveryDate == null
-                          ? 'Select Delivery Date'
-                          : 'Delivery Date: ${DateFormat('yyyy-MM-dd').format(_deliveryDate!)}',
-                      style: const TextStyle(color: Colors.black, fontSize: 16),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => _selectTime(context, false),
+                          child: Text(_deliveryTime == null
+                              ? 'Select Delivery Time'
+                              : 'Delivery Time: ${_deliveryTime!.format(context)}'),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   TextFormField(

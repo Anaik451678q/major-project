@@ -3,12 +3,20 @@ const User = require('../models/user.model');   // Import the User model (for va
 
 // Controller to create a new order
 exports.newOrder = async (req, res) => {
-    const { collectionDate, deliveryDate, amount, weight, phoneNumber } = req.body;
+    const { 
+        collectionDate, 
+        collectionTime, 
+        deliveryDate, 
+        deliveryTime, 
+        amount, 
+        weight, 
+        phoneNumber 
+    } = req.body;
 
     console.log(req.body);
 
     // Validate required fields
-    if ( !deliveryDate || !amount || !weight) {
+    if (!deliveryDate || !deliveryTime || !collectionDate || !collectionTime || !amount || !weight) {
       throw new ExpressError(400, false, 'All fields are required')
     }
 
@@ -20,8 +28,10 @@ exports.newOrder = async (req, res) => {
     // Create a new order
     const newOrder = new Order({
       userId: user._id,
-      collectionDate,  // Optional (default will apply if not provided)
+      collectionDate,
+      collectionTime,
       deliveryDate,
+      deliveryTime,
       amount,
       weight,
     });
@@ -30,7 +40,6 @@ exports.newOrder = async (req, res) => {
     await newOrder.save();
 
     res.status(200).json({ success: true, message: 'Order created successfully', order: newOrder });
-
 };
 
 // Controller to get all orders
@@ -42,7 +51,7 @@ exports.getAllOrders = async (req, res) => {
 // Controller to update an order
 exports.updateOrder = async (req, res) => {
     const { orderId } = req.params;
-    const { collectionDate, deliveryDate, amount, weight, paymentStatus } = req.body;
+    const { collectionDate, deliveryDate, amount, weight, paymentStatus, wash_weight } = req.body;
 
     // Find the order by orderId
     const order = await Order.findOne({ orderId });
@@ -57,6 +66,7 @@ exports.updateOrder = async (req, res) => {
     if (amount) order.amount = amount;
     if (weight) order.weight = weight;
     if (paymentStatus !== undefined) order.paymentStatus = paymentStatus;
+    if (wash_weight !== undefined) order.wash_weight = wash_weight;
 
     // Save the updated order
     await order.save();
@@ -83,5 +93,51 @@ exports.getOrderById = async (req, res) => {
     order.name = user.name;
     order.phoneNumber = user.phoneNumber;
     return res.status(200).json({ success: true, order });
+};
+
+// Add a new controller for updating wash weight
+exports.updateWashWeight = async (req, res) => {
+    const { orderId, wash_weight } = req.body;
+
+    if (!wash_weight) {
+      throw new ExpressError(400, false, 'Wash weight is required')
+    }
+
+    const order = await Order.findOne({ orderId });
+    if (!order) {
+      throw new ExpressError(404, false, 'Order not found')
+    }
+
+    order.wash_weight = wash_weight;
+    await order.save();
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Wash weight updated successfully', 
+      order 
+    });
+};
+
+// Add a new controller for updating payment status
+exports.updatePaymentStatus = async (req, res) => {
+    const { orderId, paymentStatus } = req.body;
+
+    if (paymentStatus === undefined) {
+      throw new ExpressError(400, false, 'Payment status is required')
+    }
+
+    const order = await Order.findOne({ orderId });
+    if (!order) {
+      throw new ExpressError(404, false, 'Order not found')
+    }
+
+    order.paymentStatus = paymentStatus;
+    await order.save();
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Payment status updated successfully', 
+      order 
+    });
 };
 

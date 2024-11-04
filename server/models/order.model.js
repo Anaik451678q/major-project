@@ -9,7 +9,9 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
     collectionDate: { type: Date, required: true},
+    collectionTime: { type: String, required: true },
     deliveryDate: { type: Date, required: true },
+    deliveryTime: { type: String, required: true },
     amount: { type: Number, required: true },
     paymentStatus: {
       type: Boolean,
@@ -17,6 +19,7 @@ const orderSchema = new mongoose.Schema(
       default: false,
     },
     weight: { type: Number, required: true },
+    wash_weight: { type: Number, default: null },
   },
   { timestamps: true }
 );

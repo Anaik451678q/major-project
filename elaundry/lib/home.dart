@@ -201,45 +201,100 @@ class OrderCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Order #${order['orderId']}',
+              'Order #${order['orderId'] ?? 'N/A'}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            _buildRichText('Total:', '₹${order['amount']}'),
-            const SizedBox(height: 4),
-            _buildRichText(
-              'Collection Date:',
-              DateFormat('dd-MM-yyyy').format(
-                DateTime.parse(order['collectionDate']),
-              ),
+            _buildDateTimeRow(
+              'Collection:',
+              order['collectionTime']?.toString(),
             ),
             const SizedBox(height: 4),
-            _buildRichText(
-              'Delivery Date:',
-              DateFormat('dd-MM-yyyy').format(
-                DateTime.parse(order['deliveryDate']),
+            _buildDateTimeRow(
+              'Delivery:',
+              order['deliveryTime']?.toString(),
+            ),
+            const SizedBox(height: 12),
+            // Weight Information Card
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade100),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildWeightColumn(
+                    'Initial Weight',
+                    '${order['weight']?.toString() ?? 'N/A'} kg',
+                    Colors.blue.shade700,
+                  ),
+                  Container(
+                    height: 40,
+                    width: 1,
+                    color: Colors.blue.shade200,
+                  ),
+                  _buildWeightColumn(
+                    'After Wash',
+                    order['wash_weight'] != null 
+                        ? '${order['wash_weight']} kg'
+                        : 'Pending',
+                    order['wash_weight'] != null 
+                        ? Colors.blue.shade700
+                        : Colors.grey,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            _buildPaymentStatus(order['paymentStatus']),
+            const SizedBox(height: 12),
+            _buildPaymentStatus(order['paymentStatus'] ?? false),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRichText(String label, String value) {
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(fontSize: 16, color: Colors.black),
-        children: [
-          TextSpan(text: '$label '),
-          TextSpan(
-            text: value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+  Widget _buildDateTimeRow(String label, String? timeStr) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          timeStr ?? 'N/A',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeightColumn(String label, String value, Color textColor) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+      ],
     );
   }
 
